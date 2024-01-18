@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT 
 pragma solidity ^0.8.0;
+
+import {VestingWallet } from "@openzeppelin/contracts/finance/VestingWallet .sol";
+
 contract User {
     struct UserDetails {
         string name;
         uint age;
         string email;
+         uint16 numberOfChild;
          
     }
     
