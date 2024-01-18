@@ -5,8 +5,9 @@ contract User {
         string name;
         uint age;
         string email;
+         
     }
-
+    
     mapping(address => UserDetails) private users;
     mapping(address => string[]) private userPolicies;
 
