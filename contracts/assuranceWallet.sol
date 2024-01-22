@@ -79,7 +79,23 @@ contract AssuranceWallet is Ownable {
         transactions.push(Transaction(transactions.length, msg.sender, _receiver, _amount, block.timestamp, true));
     }
 
-    function getTransactions() public view returns (Transaction[] memory) {
+    function getAllTransactions() public view returns (Transaction[] memory) {
         return transactions;
+    }
+
+    function getTransactionById(uint256 _id) public view returns (Transaction memory) {
+        return transactions[_id];
+    }
+
+    function getTransactionsByWallet(address _wallet) public view returns (Transaction[] memory) {
+        Transaction[] memory _transactions = new Transaction[](transactions.length);
+        uint256 counter = 0;
+        for (uint256 i = 0; i < transactions.length; i++) {
+            if (transactions[i].walletSender == _wallet || transactions[i].walletReceiver == _wallet) {
+                _transactions[counter] = transactions[i];
+                counter++;
+            }
+        }
+        return _transactions;
     }
 }
