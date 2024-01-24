@@ -78,4 +78,5 @@ contract User {
     function getUserDetails() public view returns (string memory, uint256, uint256, uint256, address, string memory, string memory, bool) {
         return (name, age, numberOfChildren, balance, userAddress, contractChosen, email, isMarried);
     }
+
 }

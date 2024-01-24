@@ -2,12 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/VestingWallet.sol";
-
 
 contract AssuranceWallet is Ownable {
 
-    address public owner;
+    // No need to declare 'owner' again, it's already declared in Ownable
 
     struct Transaction {
         uint256 transactionId;
@@ -17,7 +15,6 @@ contract AssuranceWallet is Ownable {
         uint256 date;
         bool isApproved;
         bytes32 signature;
-
     }
 
     Transaction[] public transactions;
@@ -27,8 +24,8 @@ contract AssuranceWallet is Ownable {
     event Deposit(address indexed account, uint256 amount);
     event Withdraw(address indexed account, uint256 amount);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
+    modifier onlytheOwner() {
+        require(msg.sender == owner(), "Only owner can call this function");
         _;
     }
 
@@ -42,12 +39,13 @@ contract AssuranceWallet is Ownable {
         _;
     }
 
-    constructor() Ownable() {
-        // No need to reinitialize 'owner' and 'myBalance'
+    // Constructor to set the owner to the account that deploys the contract
+    constructor(address initialOwner) Ownable(initialOwner) {
+        _transferOwnership(msg.sender);
     }
 
     function changeOwner(address _newOwner) public onlyOwner {
-        owner = _newOwner;
+        _transferOwnership(_newOwner);
     }
 
     function addWallet(address _wallet) public onlyOwner {
@@ -76,7 +74,7 @@ contract AssuranceWallet is Ownable {
     function sendEther(address payable _receiver, uint256 _amount) public onlyOwner sufficientBalance(_receiver, _amount) {
         require(_amount <= address(this).balance, "Insufficient funds");
         _receiver.transfer(_amount);
-        transactions.push(Transaction(transactions.length, msg.sender, _receiver, _amount, block.timestamp, true));
+        transactions.push(Transaction(transactions.length, msg.sender, _receiver, _amount, block.timestamp, true, bytes32(0)));
     }
 
     function getAllTransactions() public view returns (Transaction[] memory) {
