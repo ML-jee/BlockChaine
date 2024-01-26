@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "../AssuranceContrat.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+
 
 interface IMaRetraiteInsurance {
     // Enum to represent the type of insurance coverage
@@ -8,91 +11,138 @@ interface IMaRetraiteInsurance {
     // Events
     event ContributionMade(address indexed contributor, uint256 amount);
     event PolicyRedeemed(address indexed policyHolder, uint256 redeemedAmount);
-    event PolicyAdvanced(address indexed policyHolder, uint256 advancedAmount);
+    event ContractAdded(address indexed policyHolder, uint256 addedAmount);
 
     // Functions to interact with the insurance contract
+    function addContract(uint256 _amount, address gateway) external payable;
+
     function contributeToSavings(uint256 _amount) external payable;
     function redeemPolicy(uint256 _amount) external;
-    function requestPolicyAdvance(uint256 _amount) external;
-
-    
-    // Functions to get information about the policy
-    function getContributions(address _contributor) external view returns (uint256);
     function getPolicyValue() external view returns (uint256);
-    function getCoverageAmount(CoverageType _coverageType) external view returns (uint256);
-    function isCoverageActive(CoverageType _coverageType) external view returns (bool);
 
-    // Functions related to profit-sharing and remuneration
-    function calculateInterest() external view returns (uint256);
-    function getProfitSharePercentage() external view returns (uint256);
-}
-
-contract maRetraite is AssuranceContrat, IMaRetraiteInsurance{
-  // Add an opening curly brace here
-
-    // IMaRetraiteInsurance contract attributes
-    struct contractDetails{
-          uint256 contractId;
-          uint256 duration;
-          uint256 capitalTotal;
-          uint256 yearsSinceStart;
-          }
-
-     mapping(address => contractDetails) public contractDetailsOf;
-      
-     mapping(address => amount) public wallets;
-
-  
-    // Contract code goes here
-    function contributeToSavings(address userAddress,uint256 _amount) external payable override{
-        // Add code here
-     contractDetailsOf[userAddress].capitalTotal+=_amount*0.97;
-    wallets[userAddress].capitalTotal += _amount * 0.03;
-    }
-    }
-
-    function redeemPolicy(uint256 _amount) external override{
-        // Add code here
-        uint256 amountToRedeem ;
-        require(contractDetailsOf[msg.sender].capitalTotal >= _amount,"you don't have enough money");
-        if(contractDetailsOf[msg.sender].yearsSinceStart<5){amountToRedeem- = _amount*0.9;
-        }else{amountToRedeem=_amount*0.95;}
-    }
-
-
-    function requestPolicyAdvance(uint256 _amount) external override{
-        // Add code here
-        require(contractDetailsOf[msg.sender].capitalTotal >= _amount,"you don't have enough money");
-        contractDetailsOf[msg.sender].capitalTotal- = _amount;
-        wallets[msg.sender].capitalTotal+ = _amount;
-    }
-
-    function getContributions(address _contributor) external view override returns (uint256){
-        // Add code here
-        return contractDetailsOf[_contributor].capitalTotal;
-    }
-
-    function getPolicyValue() external view override returns (uint256){
-        // Add code here
-        return 0.93;
-    }
+    // Functions to get information about the policy
+    function getContributions() external view returns (uint256);
+    function getDeathAmount(address user) external view returns (uint256);
+    function getCoverageIncapability(uint256 moneyInNeed) external view returns (uint256);
     
-    function getDeathAmount(address user) external view override returns (uint256){
-        // Add code here
-         contractDetailsOf[user].capitalTotal =36.90;
-        wallets[user].capitalTotal+ =  36.90;
-    }
-
-    function getCoverageIncapability(uint256 moneyInNeed, address user) external view override returns (uint256){
-        // Add code here
-        uint256 result ;
-         result= contractDetailsOf[user].capitalTotal;
-         
-        return 2*result+moneyInNeed;
-       }
+    function getAllContract() external view returns (uint256);
+    // Functions related to profit-sharing and remuneration
 }
 
- 
+contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
+    // MaRetraiteInsurance contract attributes
+    struct ContractDetails {
+        address policyHolder;
+        address addressGateway;
+        uint256 capitalTotal;
+        uint256 yearsSinceStart;
+        uint256 monthsSinceStart;
+    }
+
+    mapping(address => ContractDetails) public contractDetailsOf;
+
+    // Contract code goes here
+    constructor() AssuranceContrat() {}
+
+    modifier userDoesNotHaveContract() {
+        require(
+            contractDetailsOf[msg.sender].capitalTotal == 0,
+            "You already have a contract"
+        );
+        _;
+    }
+
+    function addContract(uint256 _amount, address gateway) external payable override userDoesNotHaveContract {
+        contractDetailsOf[msg.sender].capitalTotal = _amount;
+        contractDetailsOf[msg.sender].policyHolder = msg.sender;
+        contractDetailsOf[msg.sender].addressGateway = gateway;
+        contractDetailsOf[msg.sender].yearsSinceStart = 0;
+        contractDetailsOf[msg.sender].monthsSinceStart = 0;
+        emit ContractAdded(msg.sender, _amount);
+    }
+
+    function contributeToSavings(uint256 _amount) external payable override {
+        // Determine the interest rate based on the number of years
+        uint256 interestRate;
+        if (contractDetailsOf[msg.sender].yearsSinceStart < 5) {
+            interestRate = 10; // 10% interest for the first 5 years
+        } else if (contractDetailsOf[msg.sender].yearsSinceStart < 8) {
+            interestRate = 5; // 5% interest for years 5-8
+        } else {
+            interestRate = 3; // 3% interest after 8 years
+        }
+
+        uint256 interestAmount = _amount * interestRate / 100;
+
+        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal+_amount +interestAmount;
+        contractDetailsOf[msg.sender].monthsSinceStart += 1;
+        assuranceWallet.addToTheInssuranceWallet(interestAmount);
+        assuranceWallet.subFromThewallet(_amount);
+        emit ContributionMade(msg.sender, _amount);
+    }
+
+    function redeemPolicy(uint256 _amount) external override {
+        uint256 amountToRedeem;
+        require(
+            contractDetailsOf[msg.sender].capitalTotal >= _amount,
+            "You don't have enough money"
+        );
+        if (contractDetailsOf[msg.sender].yearsSinceStart < 5) {
+            amountToRedeem = _amount.mul(9).div(10);
+            assuranceWallet.addToTheInssuranceWallet(_amount.mul(1).div(10));
+        } else {
+            amountToRedeem = _amount.mul(19).div(20);
+            assuranceWallet.addToTheInssuranceWallet(_amount.mul(1).div(20));
+        }
+        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal.sub(_amount);
+        assuranceWallet.addToTheWallet(amountToRedeem);
+        assuranceWallet.subFromTheInssuranceWallet(amountToRedeem);
+        emit PolicyRedeemed(msg.sender, amountToRedeem);
+    }
+
+    function getContributions() external view override returns (uint256) {
+        return contractDetailsOf[msg.sender].capitalTotal;
+    }
+
+    function getPolicyValue() external view override returns (uint256) {
+        uint256 interestRate;
+        if (contractDetailsOf[msg.sender].yearsSinceStart < 5) {
+            interestRate = 10; // 10% interest for the first 5 years
+        } else if (contractDetailsOf[msg.sender].yearsSinceStart < 8) {
+            interestRate = 5; // 5% interest for years 5-8
+        } else {
+            interestRate = 3; // 3% interest after 8 years
+        }
+        return interestRate;
+    }
+
+    function getDeathAmount(address user) external view override returns (uint256) {
+        contractDetailsOf[user].capitalTotal = 40;
+        contractDetailsOf[msg.sender].capitalTotal += contractDetailsOf[msg.sender].capitalTotal;
+
+        users.setBalance(
+            contractDetailsOf[msg.sender].addressGateway,
+            contractDetailsOf[msg.sender].capitalTotal
+        );
+        assuranceWallet.subFromTheInssuranceWallet(40);
+
+        return contractDetailsOf[msg.sender].capitalTotal;
+    }
+
+    function getCoverageIncapability(
+        uint256 moneyInNeed
+    ) external view override returns (uint256) {
+        uint256 result;
+        result = contractDetailsOf[msg.sender].capitalTotal;
+
+        assuranceWallet.subFromTheInssuranceWallet(40);
+
+        return 2 * result + moneyInNeed;
+    }
+
+    function getAllContract() external view override returns (uint256) {
+        return 0; // Placeholder, you need to implement logic to get all contracts
+    }
 
 
-
+}

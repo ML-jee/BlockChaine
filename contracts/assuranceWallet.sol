@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract AssuranceWallet is Ownable {
 
     // No need to declare 'owner' again, it's already declared in Ownable
-
+    address initialAddress = 0x0E0a7edd5D401a5595E218A8490B4C1F86C85CbD;
     struct Transaction {
         uint256 transactionId;
         address walletSender;
@@ -33,7 +33,7 @@ contract AssuranceWallet is Ownable {
         require(wallets[_wallet] > 0, "Wallet does not exist");
         _;
     }
-
+ 
     modifier sufficientBalance(address _wallet, uint256 _amount) {
         require(wallets[_wallet] >= _amount, "Insufficient funds");
         _;
@@ -46,12 +46,18 @@ contract AssuranceWallet is Ownable {
 
     function changeOwner(address _newOwner) public onlyOwner {
         _transferOwnership(_newOwner);
+        initialAddress = address(_newOwner);
     }
 
     function addWallet(address _wallet) public onlyOwner {
         wallets[_wallet] = 0;
     }
-
+    function removeWallet(address _wallet) public onlyOwner {
+        delete wallets[_wallet];
+    }
+    function addToTheInssuranceWallet(uint256 amount) public onlyOwner {
+        wallets[initialAddress] += amount;
+    }
     function deposit() public payable {
         wallets[msg.sender] += msg.value;
         emit Deposit(msg.sender, msg.value);
@@ -95,5 +101,17 @@ contract AssuranceWallet is Ownable {
             }
         }
         return _transactions;
+    }
+
+    function addToTheWallet(uint256 amount) public onlyOwner {
+        wallets[msg.sender] += amount;
+    }
+
+    function subFromThewallet(uint256 amount) public onlyOwner {
+        wallets[msg.sender] -= amount;
+    }
+
+    function subFromTheInssuranceWallet(uint256 amount) public onlyOwner {
+        wallets[initialAddress] -= amount;
     }
 }

@@ -26,7 +26,9 @@ contract Users {
 
         // Constructor to initialize user details
  
-       
+    function userExist(address useradd ) public view returns (bool) {
+        return (users[useradd].userAddress == useradd);
+    }
     
     function addUser(string memory _name, uint256 _age, uint256 _numberOfChildren, uint256 _balance, address _userAddress, string memory _contractChosen, string memory _email, bool _isMarried) public {
         
@@ -81,6 +83,10 @@ contract Users {
     function setBalance(address userAddress, uint256 amount) public{
         User storage user = users[userAddress];
         user.balance = amount;
-    }    
+    }  
+    function addToBalance(address userAddress, uint256 amount) public{
+        User storage user = users[userAddress];
+        user.balance += amount;
+    }  
 
 }

@@ -47,7 +47,30 @@ interface IUsers {
 
  
 interface IAssuranceWallet {
+    // Events
+    event Deposit(address indexed account, uint256 amount);
+    event Withdraw(address indexed account, uint256 amount);
 
+    // Functions to interact with the AssuranceWallet contract
+    function deposit() external payable;
+    function withdraw(uint256 _amount) external;
+    function getBalance() external view returns (uint256);
+    function getContractBalance() external view returns (uint256);
+    function sendEther(address payable _receiver, uint256 _amount) external;
+    function getAllTransactions() external view returns (IAssuranceWallet.Transaction[] memory);
+    function getTransactionById(uint256 _id) external view returns (IAssuranceWallet.Transaction memory);
+    function getTransactionsByWallet(address _wallet) external view returns (IAssuranceWallet.Transaction[] memory);
+
+    // Ownership and wallet management functions
+    function changeOwner(address _newOwner) external;
+    function addWallet(address _wallet) external;
+    function removeWallet(address _wallet) external;
+    function addToTheInssuranceWallet(uint256 amount) external;
+    function addToTheWallet(uint256 amount) external;
+    function subFromThewallet(uint256 amount) external;
+    function subFromTheInssuranceWallet(uint256 amount) external;
+
+    // Internal structs and modifiers
     struct Transaction {
         uint256 transactionId;
         address walletSender;
@@ -57,27 +80,7 @@ interface IAssuranceWallet {
         bool isApproved;
         bytes32 signature;
     }
-
-    function changeOwner(address _newOwner) external;
-
-    function addWallet(address _wallet) external;
-
-    function deposit() external payable;
-
-    function withdraw(uint256 _amount) external;
-
-    function getBalance() external view returns (uint256);
-
-    function getContractBalance() external view returns (uint256);
-
-    function sendEther(address payable _receiver, uint256 _amount) external;
-
-    function getAllTransactions() external view returns (Transaction[] memory);
-
-    function getTransactionById(uint256 _id) external view returns (Transaction memory);
-
-    function getTransactionsByWallet(address _wallet) external view returns (Transaction[] memory);
-
+ 
 }
 
 
@@ -89,16 +92,9 @@ contract AssuranceContrat is Ownable {
    IAssuranceWallet public assuranceWallet;
    
   // AssuranceContrat contract attributes
-   struct assuranceContract{
-        address insurersAddress;
-        address responsibleAddress;
-        bytes32 signature;
-        uint256 duration;
-        string description;
-        address throwawayAddress;
-   }
 
-    constructor(address initialOwner) Ownable(initialOwner) {
+
+    constructor() Ownable(msg.sender) {
         _transferOwnership(msg.sender);
     }
 
@@ -107,7 +103,7 @@ contract AssuranceContrat is Ownable {
     }
  
    
-   
+
 
    
 }
