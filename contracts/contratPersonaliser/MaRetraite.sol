@@ -88,8 +88,8 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
             "You don't have enough money"
         );
         if (contractDetailsOf[msg.sender].yearsSinceStart < 5) {
-            amountToRedeem = _amount.mul(9).div(10);
-            assuranceWallet.addToTheInssuranceWallet(_amount.mul(1).div(10));
+            amountToRedeem = (_amount * 9 )/ 10;
+            assuranceWallet.addToTheInssuranceWallet(_amount.tryMul(1).div(10));
         } else {
             amountToRedeem = _amount.mul(19).div(20);
             assuranceWallet.addToTheInssuranceWallet(_amount.mul(1).div(20));
