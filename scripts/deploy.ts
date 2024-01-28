@@ -6,14 +6,14 @@ async function main() {
 
   const lockedAmount = ethers.parseEther("0.001");
 
-  const MaRetraite = await ethers.deployContract("contracts/contratPersonaliser/MaRetraite.sol:MaRetraite");
+  const InjazChamil = await ethers.deployContract("contracts/contratPersonaliser/InjazChamil.sol:InjazChamil");
 
-  await MaRetraite.waitForDeployment();
+  await InjazChamil.waitForDeployment();
 
   console.log(
     `Lock with ${ethers.formatEther(
       lockedAmount
-    )} ETH and unlock timestamp ${unlockTime} deployed to ${MaRetraite.target}`
+    )} ETH and unlock timestamp ${unlockTime} deployed to ${InjazChamil.target}`
   );
 }
 
