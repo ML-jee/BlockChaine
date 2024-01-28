@@ -28,7 +28,7 @@ interface IMaRetraiteInsurance {
     // Functions related to profit-sharing and remuneration
 }
 
-contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
+contract MaRetraite is AssuranceContrat, IMaRetraiteInsurance {
     // MaRetraiteInsurance contract attributes
     struct ContractDetails {
         address policyHolder;
