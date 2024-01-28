@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 import "../AssuranceContrat.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-
 interface IMaRetraiteInsurance {
     // Enum to represent the type of insurance coverage
     enum CoverageType { Acquired, Optional }
@@ -22,9 +21,9 @@ interface IMaRetraiteInsurance {
 
     // Functions to get information about the policy
     function getContributions() external view returns (uint256);
-    function getDeathAmount(address user) external view returns (uint256);
-    function getCoverageIncapability(uint256 moneyInNeed) external view returns (uint256);
-    
+    function getDeathAmount(address user) external returns (uint256);
+    function getCoverageIncapability(uint256 moneyInNeed) external  returns (uint256);
+
     function getAllContract() external view returns (uint256);
     // Functions related to profit-sharing and remuneration
 }
@@ -44,13 +43,14 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
     // Contract code goes here
     constructor() AssuranceContrat() {}
 
-    modifier userDoesNotHaveContract() {
+    modifier userDoesNotHaveContract(){
         require(
             contractDetailsOf[msg.sender].capitalTotal == 0,
             "You already have a contract"
         );
         _;
     }
+        address[] public allAddresses; // New attribute to store all addresses
 
     function addContract(uint256 _amount, address gateway) external payable override userDoesNotHaveContract {
         contractDetailsOf[msg.sender].capitalTotal = _amount;
@@ -58,6 +58,8 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
         contractDetailsOf[msg.sender].addressGateway = gateway;
         contractDetailsOf[msg.sender].yearsSinceStart = 0;
         contractDetailsOf[msg.sender].monthsSinceStart = 0;
+        allAddresses.push(msg.sender); // Add the new address to the array
+
         emit ContractAdded(msg.sender, _amount);
     }
 
@@ -72,9 +74,9 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
             interestRate = 3; // 3% interest after 8 years
         }
 
-        uint256 interestAmount = _amount * interestRate / 100;
+        uint256 interestAmount = (_amount * interestRate) / 100;
 
-        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal+_amount +interestAmount;
+        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal + _amount + interestAmount;
         contractDetailsOf[msg.sender].monthsSinceStart += 1;
         assuranceWallet.addToTheInssuranceWallet(interestAmount);
         assuranceWallet.subFromThewallet(_amount);
@@ -88,13 +90,13 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
             "You don't have enough money"
         );
         if (contractDetailsOf[msg.sender].yearsSinceStart < 5) {
-            amountToRedeem = (_amount * 9 )/ 10;
-            assuranceWallet.addToTheInssuranceWallet(_amount.tryMul(1).div(10));
+            amountToRedeem = (_amount * 9) / 10;
+            assuranceWallet.addToTheInssuranceWallet((_amount * 1) / 10);
         } else {
-            amountToRedeem = _amount.mul(19).div(20);
-            assuranceWallet.addToTheInssuranceWallet(_amount.mul(1).div(20));
+            amountToRedeem = (_amount * 19) / 20;
+            assuranceWallet.addToTheInssuranceWallet((_amount * 1) / 20);
         }
-        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal.sub(_amount);
+        contractDetailsOf[msg.sender].capitalTotal = contractDetailsOf[msg.sender].capitalTotal - _amount;
         assuranceWallet.addToTheWallet(amountToRedeem);
         assuranceWallet.subFromTheInssuranceWallet(amountToRedeem);
         emit PolicyRedeemed(msg.sender, amountToRedeem);
@@ -116,7 +118,7 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
         return interestRate;
     }
 
-    function getDeathAmount(address user) external view override returns (uint256) {
+    function getDeathAmount(address user) external override returns (uint256) {
         contractDetailsOf[user].capitalTotal = 40;
         contractDetailsOf[msg.sender].capitalTotal += contractDetailsOf[msg.sender].capitalTotal;
 
@@ -131,18 +133,17 @@ contract maRetraite is AssuranceContrat, IMaRetraiteInsurance {
 
     function getCoverageIncapability(
         uint256 moneyInNeed
-    ) external view override returns (uint256) {
+    ) external  override returns (uint256) {
         uint256 result;
         result = contractDetailsOf[msg.sender].capitalTotal;
 
         assuranceWallet.subFromTheInssuranceWallet(40);
 
-        return 2 * result + moneyInNeed;
+        return (2 * result) + moneyInNeed;
     }
 
     function getAllContract() external view override returns (uint256) {
-        return 0; // Placeholder, you need to implement logic to get all contracts
+        return allAddresses.length;
     }
-
 
 }
