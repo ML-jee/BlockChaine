@@ -58,6 +58,8 @@ contract Users {
         emit EmailUpdated(_email);
     }
 
+    
+
     // Function to update user's marriage status
     function updateMarriageStatus(address userAddress, bool _isMarried) public {
         User storage user = users[userAddress];
